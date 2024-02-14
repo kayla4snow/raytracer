@@ -7,7 +7,7 @@
 
 // Color of shapes and background
 struct Color {
-    double red = 0.0; // TODO mult by 255?
+    double red = 0.0; 
     double green = 0.0;
     double blue = 0.0;
 };
@@ -16,7 +16,7 @@ struct Color {
 struct Shape {
     // Sphere 
     Point s_pos = {0, 0, 0};
-    double radius = 0;
+    double radius = 0.0;
     Color mat;
 };
 
@@ -29,13 +29,13 @@ struct Options {
     int width = 0;
     int height = 0;
     // Eye x y z
-    double eye_pos[3] = {0, 0, 0};
+    Point eye_pos = {0.0, 0.0, 0.0};
     // Viewdir x y z
-    double view_direc[3] = {0, 0, 0};
+    Vec view_direc = {0.0, 0.0, 0.0};
     // Hfov degrees
-    double hfov = 0;
+    double hfov = 0.0;
     // Updir x y z
-    double up_direc[3] = {0, 0, 0};
+    Vec up_direc = {0.0, 0.0, 0.0};
     // Bkgcolor r g b
     Color bg_color;
 

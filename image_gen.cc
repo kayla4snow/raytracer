@@ -44,7 +44,7 @@ void ImageGen::compute_color(Vec ray) {
     double b = 0;
     double c = 0;
     bool found_anything = false;
-    double discriminant = -1.0;
+    double shortest_dist = -1.0;
     Color color = input.bg_color;
 
     for (auto& shape : input.shapes) {
@@ -53,20 +53,34 @@ void ImageGen::compute_color(Vec ray) {
         c = (window.eye[0] - shape.s_pos[0]) * (window.eye[0] - shape.s_pos[0]) + (window.eye[1] - shape.s_pos[1]) * (window.eye[1] - shape.s_pos[1]) + (window.eye[2] - shape.s_pos[2]) * (window.eye[2] - shape.s_pos[2]) - shape.radius * shape.radius;
         double new_discriminant = b * b - 4 * a * c;
 
-        if (new_discriminant >= 0.0) {
-            if (!found_anything || new_discriminant < discriminant) {
-                discriminant = new_discriminant;
-                color = shape.mat;
-                found_anything = true;
-            }
+        if (new_discriminant < 0) {
+            // Skip current shape
+            continue;
         }
+
+        double pos_dist = (-b + sqrt(new_discriminant)) / (2 * a);
+        double neg_dist = (-b - sqrt(new_discriminant)) / (2 * a);
+    
+        // if (!found_anything || new_discriminant < discriminant) {
+        if (pos_dist >= 0.0 && (pos_dist < shortest_dist || !found_anything)) { // Enforces range
+            shortest_dist = pos_dist;
+            color = shape.mat;
+            found_anything = true;
+        }
+
+        if (neg_dist >= 0.0 && (neg_dist < shortest_dist || !found_anything)) { // Enforces range
+            shortest_dist = neg_dist;
+            color = shape.mat;
+            found_anything = true;
+        }
+
     }
 
-    if (discriminant > 0) {
+    if (shortest_dist > 0.0) {
         // Ray pierces shape
         color_to_ppm(color);
     }
-    else if (discriminant == 0.0) {
+    else if (shortest_dist == 0.0) {
         // Ray grazes shape
         color_to_ppm(color);
     }
@@ -81,7 +95,7 @@ void ImageGen::pixel_steps() {
     Vec horiz_step = step_size(window.ul, window.ur, input.width - 1);
     Vec vert_step = step_size(window.ul, window.ll, input.height - 1);
     for (int v_idx = 0; v_idx < input.height; ++v_idx) {
-        // Track curr_vert separately and adding a whole step, so that it begins again on the left edge of image
+        // Track curr_vert separately and add a whole step, so that it begins again on the left edge of image
         Point curr = curr_vert; // Start next row
 
         for (int h_idx = 0; h_idx < input.width; ++h_idx) {

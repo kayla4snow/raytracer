@@ -33,7 +33,7 @@ void Window::compute_width() {
 
 void Window::compute_height() {
     double aspect_ratio = pic_width / pic_height;
-    win_height = win_width * aspect_ratio;
+    win_height = win_width / aspect_ratio;
 }
 
 void Window::compute_u_and_v() {
@@ -48,9 +48,14 @@ void Window::compute_corners() {
     // ur = view_origin + d*n + (w/2)*u + (h/2)*v
     // ll = view_origin + d*n – (w/2)*u – (h/2)*v
     // lr = view_origin + d*n + (w/2)*u – (h/2)*v
+    view_dir = normalize_vec(view_dir);
 
-    ul = add_vec(subtract_vec(add_vec(eye, scale_vec(dist, view_dir)), scale_vec((win_width / 2.0), u)), scale_vec((win_height / 2), v)); 
-    ur = add_vec(add_vec(add_vec(eye, scale_vec(dist, view_dir)), scale_vec((win_width / 2.0), u)), scale_vec((win_height / 2), v)); 
-    ll = subtract_vec(subtract_vec(add_vec(eye, scale_vec(dist, view_dir)), scale_vec((win_width / 2.0), u)), scale_vec((win_height / 2), v)); 
-    lr = subtract_vec(add_vec(add_vec(eye, scale_vec(dist, view_dir)), scale_vec((win_width / 2.0), u)), scale_vec((win_height / 2), v)); 
+    Point dn_term = scale_vec(dist, view_dir);
+    Point wu_term = scale_vec((win_width / 2.0), u);
+    Point hv_term = scale_vec((win_height / 2.0), v);
+
+    ul = add_vec(subtract_vec(add_vec(eye, dn_term), wu_term), hv_term); 
+    ur = add_vec(add_vec(add_vec(eye, dn_term), wu_term), hv_term); 
+    ll = subtract_vec(subtract_vec(add_vec(eye, dn_term), wu_term), hv_term); 
+    lr = subtract_vec(add_vec(add_vec(eye, dn_term), wu_term), hv_term); 
 }
