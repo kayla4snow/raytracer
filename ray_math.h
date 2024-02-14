@@ -4,15 +4,7 @@
 
 #include <array>
 #include "math.h"
-
-using Vec = std::array<double, 3>;
-using Point = std::array<double, 3>;
-
-struct Ray{
-    Point origin;
-    Vec direction;
-}; 
-
+#include "types.h"
 
 // Scale
 inline Vec scale_vec(double scale, const Vec& inVec) {

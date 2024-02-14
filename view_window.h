@@ -2,6 +2,7 @@
 
 #include "options.h"
 #include "ray_math.h"
+#include "types.h"
 
 // Create a viewing window
 struct Window {

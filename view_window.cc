@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <math.h>
 #include "view_window.h"
-// #include "ray_math.h"
 
 Window::Window(Options input) {
     // Get data from input file using Options 

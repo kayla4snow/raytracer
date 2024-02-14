@@ -66,12 +66,12 @@ Options::Options(std::string read_file) {
                 fh >> curr_color.blue;
             }
             if (keyword == "sphere") { 
-                Shape new_shape;
-                fh >> new_shape.s_pos[0];
-                fh >> new_shape.s_pos[1]; 
-                fh >> new_shape.s_pos[2];
+                Sphere new_shape;
+                fh >> new_shape.center[0];
+                fh >> new_shape.center[1]; 
+                fh >> new_shape.center[2];
                 fh >> new_shape.radius;
-                new_shape.mat = curr_color;
+                new_shape.base_color = curr_color;
                 shapes.push_back(new_shape);
             }
         }

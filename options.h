@@ -3,22 +3,18 @@
 #include <array>
 #include <string>
 #include <vector>
-#include "ray_math.h"
+// #include "ray_math.h"
+#include "types.h"
+#include "3d_object.h"
 
-// Color of shapes and background
-struct Color {
-    double red = 0.0; 
-    double green = 0.0;
-    double blue = 0.0;
-};
 
 // Shapes in the scene
-struct Shape {
-    // Sphere 
-    Point s_pos = {0, 0, 0};
-    double radius = 0.0;
-    Color mat;
-};
+// struct Shape {
+//     // Sphere 
+//     Point s_pos = {0, 0, 0};
+//     double radius = 0.0;
+//     Color mat;
+// };
 
 // Read options from a file that describe a scene
 struct Options {
@@ -40,5 +36,5 @@ struct Options {
     Color bg_color;
 
     // Shapes
-    std::vector<Shape> shapes;
+    std::vector<Sphere> shapes;
 };

@@ -49,8 +49,8 @@ void ImageGen::compute_color(Vec ray) {
 
     for (auto& shape : input.shapes) {
         a = ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]; // Equals 1 if ray direction vec is normalized
-        b = 2 * (ray[0] * (window.eye[0] - shape.s_pos[0]) + ray[1] * (window.eye[1] - shape.s_pos[1]) + ray[2] * (window.eye[2] - shape.s_pos[2]));
-        c = (window.eye[0] - shape.s_pos[0]) * (window.eye[0] - shape.s_pos[0]) + (window.eye[1] - shape.s_pos[1]) * (window.eye[1] - shape.s_pos[1]) + (window.eye[2] - shape.s_pos[2]) * (window.eye[2] - shape.s_pos[2]) - shape.radius * shape.radius;
+        b = 2 * (ray[0] * (window.eye[0] - shape.center[0]) + ray[1] * (window.eye[1] - shape.center[1]) + ray[2] * (window.eye[2] - shape.center[2]));
+        c = (window.eye[0] - shape.center[0]) * (window.eye[0] - shape.center[0]) + (window.eye[1] - shape.center[1]) * (window.eye[1] - shape.center[1]) + (window.eye[2] - shape.center[2]) * (window.eye[2] - shape.center[2]) - shape.radius * shape.radius;
         double new_discriminant = b * b - 4 * a * c;
 
         if (new_discriminant < 0) {
@@ -61,16 +61,15 @@ void ImageGen::compute_color(Vec ray) {
         double pos_dist = (-b + sqrt(new_discriminant)) / (2 * a);
         double neg_dist = (-b - sqrt(new_discriminant)) / (2 * a);
     
-        // if (!found_anything || new_discriminant < discriminant) {
         if (pos_dist >= 0.0 && (pos_dist < shortest_dist || !found_anything)) { // Enforces range
             shortest_dist = pos_dist;
-            color = shape.mat;
+            color = shape.base_color;
             found_anything = true;
         }
 
         if (neg_dist >= 0.0 && (neg_dist < shortest_dist || !found_anything)) { // Enforces range
             shortest_dist = neg_dist;
-            color = shape.mat;
+            color = shape.base_color;
             found_anything = true;
         }
 
