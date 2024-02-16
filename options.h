@@ -1,11 +1,13 @@
 #pragma once
 
 #include <array>
+#include <memory>
 #include <string>
 #include <vector>
 // #include "ray_math.h"
 #include "types.h"
 #include "3d_object.h"
+#include "light_source.h"
 
 
 // Shapes in the scene
@@ -36,5 +38,7 @@ struct Options {
     Color bg_color;
 
     // Shapes
-    std::vector<Sphere> shapes;
+    // TODO move somewhere else
+    std::vector<Sphere> shapes;  // TODO make <SceneObject> instead of Sphere
+    std::vector<std::shared_ptr<Light>> lights;
 };

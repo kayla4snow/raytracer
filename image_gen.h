@@ -17,6 +17,8 @@ class ImageGen {
         void pixel_steps();
 
     private:
+        Color blinn_phong(const Sphere& shape, const Point& intersect_pt, const Vec& ray);
+        
         FILE *fh = nullptr;
 
         Options input;

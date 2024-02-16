@@ -16,7 +16,7 @@ inline Vec add_vec(const Vec& vec1, const Vec& vec2) {
     return Vec{vec1[0] + vec2[0], vec1[1] + vec2[1], vec1[2] + vec2[2]};
 }
 
-// Subtraction
+// Subtraction: vec1 - vec2
 inline Vec subtract_vec(const Vec& vec1, const Vec& vec2) {
     return Vec{vec1[0] - vec2[0], vec1[1] - vec2[1], vec1[2] - vec2[2]};
 }
@@ -42,6 +42,14 @@ inline Vec cross_product(const Vec& vec1, const Vec& vec2) {
     double j = vec1[0] * vec2[2] - vec1[2] * vec2[0];
     double k = vec1[0] * vec2[1] - vec1[1] * vec2[0];
     return Vec{i, -j, k}; 
+}
+
+// Dot product
+inline double dot_product(const Vec& vec1, const Vec& vec2) {
+    double x = vec1[0] * vec2[0];
+    double y = vec1[1] * vec1[1];
+    double z = vec1[2] * vec2[2];
+    return x + y + z;
 }
 
 // Parametric representation of a ray
