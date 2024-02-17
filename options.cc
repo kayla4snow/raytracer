@@ -61,6 +61,7 @@ Options::Options(std::string read_file) {
                 fh >> bg_color[2];
             }
             if (keyword == "mtlcolor") {
+                // mtlcolor Odr Odg Odb Osr Osg Osb ka kd ks n
                 // Diffuse color
                 fh >> curr_color.diffuse_color[0];
                 fh >> curr_color.diffuse_color[1];
@@ -90,12 +91,11 @@ Options::Options(std::string read_file) {
                 shapes.emplace_back(new_shape);
             }
             if (keyword == "light") {
-                // Light new_light;
+                // light x y z type (no intensity)
                 Point direction;
                 fh >> direction[0];
                 fh >> direction[1];
                 fh >> direction[2];
-                // TODO make first three inputs variables, set to light later after determinung type
 
                 int type = -1;
                 fh >> type;
@@ -106,6 +106,38 @@ Options::Options(std::string read_file) {
                 else if (type == 0) {
                     // Make directional light
                     lights.emplace_back(std::make_shared<DirectionalLight>(direction, 1));
+                }
+                else {
+                    std::cout << "Invalid light type provided in file";
+                    break;
+                }
+            }
+            if (keyword == "attlight") {
+                // Light attenuation
+                // attlight x y z type i c1 c2 c3
+                Point direction;
+                fh >> direction[0];
+                fh >> direction[1];
+                fh >> direction[2];
+
+                int type = -1;
+                fh >> type;
+                double intensity;
+                fh >> intensity;
+                double c1;
+                double c2;
+                double c3;
+                fh >> c1;
+                fh >> c2;
+                fh >> c3;
+                if (type == 1) {
+                    // Make point light
+                    lights.emplace_back(std::make_shared<PointLight>(direction, intensity, c1, c2, c3));
+                }
+                else if (type == 0) {
+                    std::cout << "Directional lights can't do light attenuation\n";
+                    break;
+                    // lights.emplace_back(std::make_shared<DirectionalLight>(direction, 1));
                 }
                 else {
                     std::cout << "Invalid light type provided in file";

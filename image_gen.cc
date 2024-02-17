@@ -113,7 +113,7 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
             shadow_factor = 0.0;
         }
 
-        double x = shadow_factor * light->intensity;
+        double x = shadow_factor * light->attenuation_intensity(distance_to_light);
 
         // For each successive light, combine diffuse and specular terms then add to mult_light
         mult_lights = add_vec(mult_lights, scale_vec(x, add_vec(diffuse_term, specular_term)));
