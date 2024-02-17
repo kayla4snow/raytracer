@@ -48,7 +48,7 @@ inline Vec cross_product(const Vec& vec1, const Vec& vec2) {
 // Dot product
 inline double dot_product(const Vec& vec1, const Vec& vec2) {
     double x = vec1[0] * vec2[0];
-    double y = vec1[1] * vec1[1];
+    double y = vec1[1] * vec2[1];
     double z = vec1[2] * vec2[2];
     return x + y + z;
 }

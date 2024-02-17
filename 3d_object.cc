@@ -38,5 +38,6 @@ Vec Sphere::calc_normal_vector(const Point& point) const {
     // xi is ray/sphere intersection and xc is sphere center
 
     Vec temp = subtract_vec(point, center);
-    return scale_vec(1.0 / radius, temp);
+    return normalize_vec(scale_vec(1.0 / radius, temp));
+    // Added normalization
 }

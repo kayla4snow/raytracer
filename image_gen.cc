@@ -3,6 +3,7 @@
 #include <string>
 #include <algorithm>
 #include <cmath>
+#include <iomanip>
 #include "image_gen.h"
 
 ImageGen::ImageGen(Options in_input, Window in_window) : input(in_input), window(in_window) {
@@ -46,23 +47,36 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
     Vec diffuse_term = {0.0, 0.0, 0.0};
     Vec specular_term = {0.0, 0.0, 0.0};
     Vec N = shape->calc_normal_vector(intersect_pt);
-    // std::cout << N[0] << " " << N[1] << " " << N[2] << std::endl;
-    Color mult_lights = {0.0, 0.0, 0.0};
 
-    // Flip ray back to original direction to fix bug (fix this in function call)
-    Vec new_ray = scale_vec(-1, ray);
+    // // Flip ray back to original direction to fix bug (fix this in function call)
+    // Vec new_ray = scale_vec(-1, ray);
+
+    // Debugging
+    // bool extraDebug = false;
+    // if(abs(intersect_pt[0]) < 0.0069 && abs((intersect_pt[1] - 0.93) < 0.0069)){
+    //     extraDebug = true;
+    // }
+    // if (extraDebug) {
+    //     std::cout << std::fixed << std::setprecision(6);
+    //     std::cout << "n: " << N[0] << " " << N[1] << " " << N[2] << std::endl;
+    //     std::cout << "r: " << ray[0] << " " << ray[1] << " " << ray[2] << std::endl;
+    //     std::cout << "p: " << intersect_pt[0] << " " << intersect_pt[1] << " " << intersect_pt[2] << std::endl << std::endl;
+    // }
+
+    Color mult_lights = {0.0, 0.0, 0.0};
 
     Vec ambient_term = scale_vec(shape->base_color.coef_ambient, shape->base_color.diffuse_color);
     clamp_vec(ambient_term);
 
     for (auto& light : input.lights) {
         Vec L = light->calc_L(intersect_pt);
-        Vec H = normalize_vec(add_vec(L, new_ray)); // Ray is V
+        Vec H = normalize_vec(add_vec(L, scale_vec(-1, ray))); // Ray is V
 
         // Debugging 
-        // if(abs(intersect_pt[0]) < 0.0069 && abs(intersect_pt[1] < 0.0069)){
+        // if (extraDebug) {
         //     std::cout << "N: "<< N[0] << " " << N[1] << " " << N[2] << std::endl;
-        //     std::cout << "L: "<< L[0] << " " << L[1] << " " << L[2] << std::endl;
+        //     std::cout << "H: "<< H[0] << " " << H[1] << " " << H[2] << std::endl;
+        //     std::cout << "L: "<< L[0] << " " << L[1] << " " << L[2] << std::endl << std::endl;
         // }
 
         double dot_N_L = dot_product(N, L); 
@@ -81,14 +95,14 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
 
         Vec temp2 = scale_vec(shape->base_color.coef_specular, shape->base_color.spec_highlight);
         specular_term = scale_vec(std::pow(std::max(0.0, dot_N_H), shape->base_color.spec_exponent), temp2); 
+        // specular_term = scale_vec(10000, specular_term);
         clamp_vec(specular_term);
+        // std::cout << "Specular exp: " << shape->base_color.spec_exponent << std::endl;
+        // if (specular_term[0] > 0 || specular_term[1] > 0 || specular_term[2] > 0) {
+        //     std::cout << "Specular term: " << specular_term[0] << " " << specular_term[1] << " " << specular_term[2] << std::endl;
+        // }
+        // std::cout << dot_N_H << std::endl;
 
-        /*
-        TODO
-                - use distance and point, and check if shape is between intersection_pt and light
-            - (new equation for point lights to find distance from intersection_pt)
-
-        */
         // Shadow ray
         Ray shadow_ray = {intersect_pt, L};
         double distance_to_light = light->find_distance(intersect_pt);
@@ -123,6 +137,11 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
     // Clamp illumination between 0-1
     clamp_vec(illumination);
 
+    //Debugging
+    // if (extraDebug) {
+    //     std::cout << "c: "<< illumination[0] << " " << illumination[1] << " " << illumination[2] << std::endl << std::endl;
+
+    // }
     return illumination;
 }
 
@@ -146,11 +165,10 @@ void ImageGen::compute_color(const Ray& ray) {
 
         if (shape_dist >= 0.0 && (shape_dist < shortest_dist || !found_anything)) { // Enforces range
             shortest_dist = shape_dist;
-            // color = shape.base_color.diffuse_color; 
-            // std::cout << intersection_pt[0]  << " " << intersection_pt[1] << " " << intersection_pt[2] << std::endl;
-            // std::cout << ray[2] << std::endl;
-            color = blinn_phong(shape, intersection_pt, scale_vec(-1.0, ray.direction));
-            // TODO compute shadows (and depth blending)
+
+            color = blinn_phong(shape, intersection_pt, ray.direction);
+            // TODO depth cueing 
+
             found_anything = true;
         }
 
