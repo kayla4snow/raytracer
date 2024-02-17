@@ -7,6 +7,7 @@ using HitResult = std::pair<double, Point>;
 
 class SceneObject {
     public:
+        // Determine if there's an intersection between the ray passed in and this shape
         virtual std::optional<HitResult> hit_test(const Ray& ray) = 0; 
         virtual Vec calc_normal_vector(const Point& point) const = 0;
 

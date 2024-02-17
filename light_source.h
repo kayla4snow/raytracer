@@ -6,6 +6,7 @@ class Light {
         Light(double inIntensity) : intensity(inIntensity) {
         }
         virtual Vec calc_L(const Point& intersection) = 0;
+        virtual double find_distance(const Point& point) = 0;
 
         double intensity = 0.5;  // Range 0-1
 };
@@ -16,6 +17,7 @@ class PointLight : public Light {
     public:
         PointLight(Point inPos, double inIntensity);
         Vec calc_L(const Point& intersection) override;
+        double find_distance(const Point& point) override;
 
         const Point position = {0, 0, 0};
 };
@@ -25,6 +27,7 @@ class DirectionalLight : public Light {
     public:
         DirectionalLight(Vec direc_input, double inIntensity);
         Vec calc_L(const Point& intersection) override;
+        double find_distance(const Point& point) override;
 
         const Vec direction = {0, 0, 0};
         Vec L = {0, 0, 0};

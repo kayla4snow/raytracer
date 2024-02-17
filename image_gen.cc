@@ -85,28 +85,34 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
 
         /*
         TODO
-        - (switch shapes to shared pointer, like the lights are)
-            - pass in shared pointer to shape in this function
-            - if curr == shape, ignore
-            - for (auto& shadowShape : input.shapes) {
-                if (shape == shadowShape ) {
-                    continue;
-                }
-
-                // call the shape->hit_test(L);
-                // .... see below.
-            }
-        - for loop to iterate over input.shapes
-            - skip if current shape
-            - (move intersection stuff into shape class)
-            - call hit_test(L)
                 - use distance and point, and check if shape is between intersection_pt and light
             - (new equation for point lights to find distance from intersection_pt)
 
         */
+        // Shadow ray
+        Ray shadow_ray = {intersect_pt, L};
+        double distance_to_light = light->find_distance(intersect_pt);
 
         // Shadow flag
         double shadow_factor = 1.0;
+        for (auto& shadowShape : input.shapes) {
+            if (shape.get() == shadowShape.get()) {
+                // Compare the pointers of the passed in shape and the current shape (iterating the whole list)
+                continue;
+            }
+
+            auto shadow_hit = shadowShape->hit_test(shadow_ray);
+            // Pass if no shapes in between
+            if (!shadow_hit) {
+                continue;
+            }
+            // Check if shape is behind light
+            if (shadow_hit->first > distance_to_light) {
+                continue;
+            }
+            shadow_factor = 0.0;
+        }
+
         double x = shadow_factor * light->intensity;
 
         // For each successive light, combine diffuse and specular terms then add to mult_light

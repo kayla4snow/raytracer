@@ -9,15 +9,6 @@
 #include "3d_object.h"
 #include "light_source.h"
 
-
-// Shapes in the scene
-// struct Shape {
-//     // Sphere 
-//     Point s_pos = {0, 0, 0};
-//     double radius = 0.0;
-//     Color mat;
-// };
-
 // Read options from a file that describe a scene
 struct Options {
     // Explicit constructor 

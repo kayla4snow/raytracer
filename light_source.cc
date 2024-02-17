@@ -1,3 +1,5 @@
+#include <limits>
+
 #include "light_source.h"
 #include "ray_math.h"
 
@@ -11,6 +13,11 @@ Vec PointLight::calc_L(const Point& intersection) {
     return normalize_vec(newVec);
 }
 
+// Find distance between light position and point passed in
+double PointLight::find_distance(const Point& point) {
+    return magnitude_vec(subtract_vec(position, point));
+}
+
 
 // DirectionalLight functions
 
@@ -21,4 +28,9 @@ DirectionalLight::DirectionalLight(Vec direc_input, double inIntensity) : direct
 
 Vec DirectionalLight::calc_L(const Point& intersection) {
     return L;
+}
+
+// Directional Lights are infinitely far away
+double DirectionalLight::find_distance(const Point& point) {
+    return std::numeric_limits<double>::max();
 }
