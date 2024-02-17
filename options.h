@@ -37,9 +37,8 @@ struct Options {
     // Bkgcolor r g b
     Color bg_color;
 
-    // Shapes
+    // Shapes and lights
     // TODO move somewhere else
-    // std::vector<std::shared_ptr<SceneObject>> shapes;  // TODO make <SceneObject> instead of Sphere
-    std::vector<Sphere> shapes;
+    std::vector<std::shared_ptr<SceneObject>> shapes; 
     std::vector<std::shared_ptr<Light>> lights;
 };

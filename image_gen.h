@@ -13,11 +13,11 @@ class ImageGen {
 
         void create_ppm(std::string write_file);
         void color_to_ppm(Color color);
-        void compute_color(Vec ray);
+        void compute_color(const Ray& ray);
         void pixel_steps();
 
     private:
-        Color blinn_phong(const Sphere& shape, const Point& intersect_pt, const Vec& ray);
+        Color blinn_phong(std::shared_ptr<SceneObject> shape, const Point& intersect_pt, const Vec& ray);
         
         FILE *fh = nullptr;
 

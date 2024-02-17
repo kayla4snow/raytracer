@@ -54,9 +54,12 @@ inline double dot_product(const Vec& vec1, const Vec& vec2) {
 }
 
 // Parametric representation of a ray
-inline Vec compute_ray(const Vec& origin, const Vec& target) {
+inline Ray compute_ray(const Vec& origin, const Vec& target) {
     Vec subtracted = subtract_vec(target, origin);
-    return normalize_vec(subtracted);
+    Ray new_ray;
+    new_ray.origin = origin;
+    new_ray.direction = normalize_vec(subtracted);
+    return new_ray;
 }
 
 inline Vec step_size(const Vec& pt1, const Vec& pt2, int num_steps) {

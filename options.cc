@@ -80,13 +80,13 @@ Options::Options(std::string read_file) {
                 fh >> curr_color.spec_exponent;
             }
             if (keyword == "sphere") { 
-                Sphere new_shape;
-                fh >> new_shape.center[0];
-                fh >> new_shape.center[1]; 
-                fh >> new_shape.center[2];
+                auto new_shape = std::make_shared<Sphere>();
+                fh >> new_shape->center[0];
+                fh >> new_shape->center[1]; 
+                fh >> new_shape->center[2];
 
-                fh >> new_shape.radius;
-                new_shape.base_color = curr_color;
+                fh >> new_shape->radius;
+                new_shape->base_color = curr_color;
                 shapes.emplace_back(new_shape);
             }
             if (keyword == "light") {

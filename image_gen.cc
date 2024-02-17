@@ -41,18 +41,18 @@ void ImageGen::color_to_ppm(Color color) {
     }
 }
 
-Color ImageGen::blinn_phong(const Sphere& shape, const Point& intersect_pt, const Vec& ray) {  
+Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& intersect_pt, const Vec& ray) {  
     Color illumination = {0.0, 0.0, 0.0}; // Final value should be in range 0-1
     Vec diffuse_term = {0.0, 0.0, 0.0};
     Vec specular_term = {0.0, 0.0, 0.0};
-    Vec N = shape.calc_normal_vector(intersect_pt);
+    Vec N = shape->calc_normal_vector(intersect_pt);
     // std::cout << N[0] << " " << N[1] << " " << N[2] << std::endl;
     Color mult_lights = {0.0, 0.0, 0.0};
 
     // Flip ray back to original direction to fix bug (fix this in function call)
     Vec new_ray = scale_vec(-1, ray);
 
-    Vec ambient_term = scale_vec(shape.base_color.coef_ambient, shape.base_color.diffuse_color);
+    Vec ambient_term = scale_vec(shape->base_color.coef_ambient, shape->base_color.diffuse_color);
     clamp_vec(ambient_term);
 
     for (auto& light : input.lights) {
@@ -66,7 +66,7 @@ Color ImageGen::blinn_phong(const Sphere& shape, const Point& intersect_pt, cons
         // }
 
         double dot_N_L = dot_product(N, L); 
-        Vec temp1 = scale_vec(shape.base_color.coef_diffuse, shape.base_color.diffuse_color);
+        Vec temp1 = scale_vec(shape->base_color.coef_diffuse, shape->base_color.diffuse_color);
         diffuse_term = scale_vec(std::max(0.0, dot_N_L), temp1);
         clamp_vec(diffuse_term);
 
@@ -79,8 +79,8 @@ Color ImageGen::blinn_phong(const Sphere& shape, const Point& intersect_pt, cons
         //     std::cout << dot_N_H << std::endl;
         // }
 
-        Vec temp2 = scale_vec(shape.base_color.coef_specular, shape.base_color.spec_highlight);
-        specular_term = scale_vec(std::pow(std::max(0.0, dot_N_H), shape.base_color.spec_exponent), temp2); 
+        Vec temp2 = scale_vec(shape->base_color.coef_specular, shape->base_color.spec_highlight);
+        specular_term = scale_vec(std::pow(std::max(0.0, dot_N_H), shape->base_color.spec_exponent), temp2); 
         clamp_vec(specular_term);
 
         /*
@@ -120,10 +120,7 @@ Color ImageGen::blinn_phong(const Sphere& shape, const Point& intersect_pt, cons
     return illumination;
 }
 
-void ImageGen::compute_color(Vec ray) {
-    double a = 0;
-    double b = 0;
-    double c = 0;
+void ImageGen::compute_color(const Ray& ray) {
     bool found_anything = false;
     double shortest_dist = -1.0;
     Color color = input.bg_color; //TODO change to MaterialColor
@@ -132,39 +129,21 @@ void ImageGen::compute_color(Vec ray) {
     //blinn_phong(input.shapes[0], {0.0, 0.0, -3.0}, {0.0, 0.0, 1.0});
 
     for (auto& shape : input.shapes) {
-        // TODO move sphere equations to sphere class
+        // Call hit_test (in 3d_object) to determine if there's an intersection
+        auto hit_result = shape->hit_test(ray);
 
-        a = ray[0] * ray[0] + ray[1] * ray[1] + ray[2] * ray[2]; // Equals 1 if ray direction vec is normalized
-        b = 2 * (ray[0] * (window.eye[0] - shape.center[0]) + ray[1] * (window.eye[1] - shape.center[1]) + ray[2] * (window.eye[2] - shape.center[2]));
-        c = (window.eye[0] - shape.center[0]) * (window.eye[0] - shape.center[0]) + (window.eye[1] - shape.center[1]) * (window.eye[1] - shape.center[1]) + (window.eye[2] - shape.center[2]) * (window.eye[2] - shape.center[2]) - shape.radius * shape.radius;
-        double new_discriminant = b * b - 4 * a * c;
-
-        if (new_discriminant < 0) {
-            // Skip current shape if discriminant is negative 
+        if (!hit_result) {
+            // If hit_test doesn't return anything (no contact with sphere), skip this shape
             continue;
         }
+        auto& [shape_dist, intersection_pt] = *hit_result;
 
-        double dist1 = (-b + sqrt(new_discriminant)) / (2 * a);
-        double dist2 = (-b - sqrt(new_discriminant)) / (2 * a);
-        double shape_dist = -10000;
-
-        // Find shortest distance between dist1 and dist2
-        if (dist1 >= 0.0 && dist1 < dist2) {
-            shape_dist = dist1;
-        }
-        else if (dist2 >= 0.0 && dist2 < dist1) {
-            shape_dist = dist2;
-        }
-        
-        // Find intersection pt   TODO maybe need unnormalized ray
-        Point intersection_pt = {window.eye[0] + shape_dist * ray[0], window.eye[1] + shape_dist * ray[1], window.eye[2] + shape_dist * ray[2]};
-    
         if (shape_dist >= 0.0 && (shape_dist < shortest_dist || !found_anything)) { // Enforces range
             shortest_dist = shape_dist;
             // color = shape.base_color.diffuse_color; 
             // std::cout << intersection_pt[0]  << " " << intersection_pt[1] << " " << intersection_pt[2] << std::endl;
             // std::cout << ray[2] << std::endl;
-            color = blinn_phong(shape, intersection_pt, scale_vec(-1.0, ray));
+            color = blinn_phong(shape, intersection_pt, scale_vec(-1.0, ray.direction));
             // TODO compute shadows (and depth blending)
             found_anything = true;
         }
@@ -197,8 +176,8 @@ void ImageGen::pixel_steps() {
         Point curr = curr_vert; // Start next row
 
         for (int h_idx = 0; h_idx < input.width; ++h_idx) {
-            Vec ray = compute_ray(window.eye, curr); // Compute ray with eye as the origin
-            ray = normalize_vec(ray);
+            Ray ray = compute_ray(window.eye, curr); // Compute ray with eye as the origin
+
             // Call compute_color on each ray (in each iteration)
             compute_color(ray);
             curr = add_vec(curr, horiz_step); 
