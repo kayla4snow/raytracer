@@ -3,6 +3,7 @@
 #define RAY_MATH_H_
 
 #include <array>
+#include <algorithm>
 #include "math.h"
 #include "types.h"
 
@@ -61,6 +62,13 @@ inline Vec compute_ray(const Vec& origin, const Vec& target) {
 inline Vec step_size(const Vec& pt1, const Vec& pt2, int num_steps) {
     Vec vec = subtract_vec(pt2, pt1);
     return Vec{vec[0] / num_steps, vec[1] / num_steps, vec[2]/ num_steps};
+}
+
+// Clamp vector values between 0 and 1
+inline void clamp_vec(Vec& vec) {
+    vec[0] = std::clamp(vec[0], 0.0, 1.0);
+    vec[1] = std::clamp(vec[1], 0.0, 1.0);
+    vec[2] = std::clamp(vec[2], 0.0, 1.0);
 }
 
 #endif // RAY_MATH_H_

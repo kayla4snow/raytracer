@@ -87,7 +87,7 @@ Options::Options(std::string read_file) {
 
                 fh >> new_shape.radius;
                 new_shape.base_color = curr_color;
-                shapes.push_back(new_shape);
+                shapes.emplace_back(new_shape);
             }
             if (keyword == "light") {
                 // Light new_light;
@@ -99,13 +99,13 @@ Options::Options(std::string read_file) {
 
                 int type = -1;
                 fh >> type;
-                if (type == 0) {
+                if (type == 1) {
                     // Make point light
-                    lights.emplace_back(std::make_shared<PointLight>(direction, 0.5));
+                    lights.emplace_back(std::make_shared<PointLight>(direction, 1));
                 }
-                else if (type == 1) {
+                else if (type == 0) {
                     // Make directional light
-                    lights.emplace_back(std::make_shared<DirectionalLight>(direction, 0.5));
+                    lights.emplace_back(std::make_shared<DirectionalLight>(direction, 1));
                 }
                 else {
                     std::cout << "Invalid light type provided in file";

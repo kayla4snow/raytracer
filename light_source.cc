@@ -16,6 +16,7 @@ Vec PointLight::calc_L(const Point& intersection) {
 
 DirectionalLight::DirectionalLight(Vec direc_input, double inIntensity) : direction(direc_input), Light(inIntensity) {
     L = normalize_vec(scale_vec(-1, direction));
+    // L = normalize_vec(scale_vec(1, direction));
 }
 
 Vec DirectionalLight::calc_L(const Point& intersection) {
