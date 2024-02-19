@@ -32,6 +32,7 @@ double PointLight::attenuation_intensity(double distance) {
     return intensity / (c1 + c2 * distance + c3 * (distance * distance));
 }
 
+
 // DirectionalLight functions
 
 DirectionalLight::DirectionalLight(Vec direc_input, double inIntensity) : direction(direc_input), Light(inIntensity) {

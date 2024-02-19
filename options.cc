@@ -144,6 +144,20 @@ Options::Options(std::string read_file) {
                     break;
                 }
             }
+            if (keyword == "depthcueing") { 
+                // depthcueing dc-r dc-g dc-b alpha-min alpha-max dist-min dist-max
+                DepthCue dc;
+                fh >> dc.depth_color[0];
+                fh >> dc.depth_color[1]; 
+                fh >> dc.depth_color[2];
+
+                fh >> dc.alpha_min;
+                fh >> dc.alpha_max;
+                fh >> dc.dist_near;
+                fh >> dc.dist_far;
+
+                depth_cue = dc;
+            }
         }
     }
     else {

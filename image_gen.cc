@@ -70,7 +70,7 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
 
     for (auto& light : input.lights) {
         Vec L = light->calc_L(intersect_pt);
-        Vec H = normalize_vec(add_vec(L, scale_vec(-1, ray))); // Ray is V
+        Vec H = normalize_vec(add_vec(L, ray)); // Ray is V
 
         // Debugging 
         // if (extraDebug) {
@@ -145,13 +145,34 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
     return illumination;
 }
 
+Color ImageGen::depth_cueing(double shape_dist, Color illumination) {
+    double alpha_depth;
+    // Find alpha_depth using piece-wise function
+    if (shape_dist <= input.depth_cue->dist_near) {
+        // dist_near is closer to the eye
+        alpha_depth = input.depth_cue->alpha_max;
+    }
+    else if (shape_dist >= input.depth_cue->dist_far) {
+        // dist_far is farther from the eye
+        alpha_depth = input.depth_cue->alpha_min;
+    }
+    else {
+        alpha_depth = input.depth_cue->alpha_min + (input.depth_cue->alpha_max - input.depth_cue->alpha_min) * ((input.depth_cue->dist_far - shape_dist) / (input.depth_cue->dist_far - input.depth_cue->dist_near));
+    }
+    std::clamp(alpha_depth, 0.0, 1.0);
+
+    // Depth cue equation, using illumination found in Blinn-Phong
+    Vec depth_cue = add_vec(scale_vec(alpha_depth, illumination), 
+                            scale_vec(1 - alpha_depth, input.depth_cue->depth_color));
+    
+    clamp_vec(depth_cue);
+    return depth_cue;
+}
+
 void ImageGen::compute_color(const Ray& ray) {
     bool found_anything = false;
     double shortest_dist = -1.0;
     Color color = input.bg_color; //TODO change to MaterialColor
-
-    // Test
-    //blinn_phong(input.shapes[0], {0.0, 0.0, -3.0}, {0.0, 0.0, 1.0});
 
     for (auto& shape : input.shapes) {
         // Call hit_test (in 3d_object) to determine if there's an intersection
@@ -166,8 +187,10 @@ void ImageGen::compute_color(const Ray& ray) {
         if (shape_dist >= 0.0 && (shape_dist < shortest_dist || !found_anything)) { // Enforces range
             shortest_dist = shape_dist;
 
-            color = blinn_phong(shape, intersection_pt, ray.direction);
-            // TODO depth cueing 
+            color = blinn_phong(shape, intersection_pt, scale_vec(-1, ray.direction));
+            if (input.depth_cue) {
+                color = depth_cueing(shape_dist, color);
+            }
 
             found_anything = true;
         }

@@ -18,7 +18,8 @@ class ImageGen {
 
     private:
         Color blinn_phong(std::shared_ptr<SceneObject> shape, const Point& intersect_pt, const Vec& ray);
-        
+        Color depth_cueing(double shape_dist, Color illumination);
+
         FILE *fh = nullptr;
 
         Options input;
