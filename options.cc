@@ -165,4 +165,14 @@ Options::Options(std::string read_file) {
     }
 
     fh.close();
+
+    // Decrease the intensity of the lights if there are multiple
+    if (int size = lights.size(); size > 1) {
+        double factor = 1.0 / size;
+        for (auto& light : lights) {
+            if (light->intensity != 1) {
+                light->intensity *= factor;
+            }
+        }
+    }
 }
