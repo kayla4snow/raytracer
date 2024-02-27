@@ -37,11 +37,11 @@ void ImageGen::color_to_ppm(Color color) {
     }
 }
 
-Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& intersect_pt, const Vec& ray) {  
+Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const HitResult& hit_result, const Vec& ray) {  
     Color illumination = {0.0, 0.0, 0.0}; // Final value should be in range 0-1
     Vec diffuse_term = {0.0, 0.0, 0.0};
     Vec specular_term = {0.0, 0.0, 0.0};
-    Vec N = shape->calc_normal_vector(intersect_pt);
+    Vec N = hit_result.normal_vec;
 
     Color mult_lights = {0.0, 0.0, 0.0};
 
@@ -49,7 +49,7 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
     clamp_vec(ambient_term);
 
     for (auto& light : input.lights) {
-        Vec L = light->calc_L(intersect_pt);
+        Vec L = light->calc_L(hit_result.intersect_pt);
         Vec H = normalize_vec(add_vec(L, ray)); // Ray is V
 
         double dot_N_L = dot_product(N, L); 
@@ -64,8 +64,8 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
         clamp_vec(specular_term);
 
         // Shadow ray
-        Ray shadow_ray = {intersect_pt, L};
-        double distance_to_light = light->find_distance(intersect_pt);
+        Ray shadow_ray = {hit_result.intersect_pt, L};
+        double distance_to_light = light->find_distance(hit_result.intersect_pt);
 
         // Shadow flag
         double shadow_factor = 1.0;
@@ -81,7 +81,7 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const Point& int
                 continue;
             }
             // Check if shape is behind light
-            if (shadow_hit->first < 0 || shadow_hit->first > distance_to_light) {
+            if (shadow_hit->shape_dist < 0 || shadow_hit->shape_dist > distance_to_light) {
                 continue;
             }
             shadow_factor = 0.0;
@@ -134,17 +134,16 @@ void ImageGen::compute_color(const Ray& ray) {
         auto hit_result = shape->hit_test(ray);
 
         if (!hit_result) {
-            // If hit_test doesn't return anything (no contact with sphere), skip this shape
+            // If hit_test doesn't return anything (no contact with shape), skip this shape
             continue;
         }
-        auto& [shape_dist, intersection_pt] = *hit_result;
 
-        if (shape_dist >= 0.0 && (shape_dist < shortest_dist || !found_anything)) { // Enforces range
-            shortest_dist = shape_dist;
+        if (hit_result->shape_dist >= 0.0 && (hit_result->shape_dist < shortest_dist || !found_anything)) { // Enforces range
+            shortest_dist = hit_result->shape_dist;
 
-            color = blinn_phong(shape, intersection_pt, scale_vec(-1, ray.direction));
+            color = blinn_phong(shape, *hit_result, scale_vec(-1, ray.direction));
             if (input.depth_cue) {
-                color = depth_cueing(shape_dist, color);
+                color = depth_cueing(hit_result->shape_dist, color);
             }
 
             found_anything = true;

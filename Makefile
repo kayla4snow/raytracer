@@ -1,6 +1,6 @@
 CXX=g++
 CXXFLAGS = -std=c++17 -g -ggdb
-out_file = raytracer1b
+out_file = raytracer1c
 
 .DEFAULT_GOAL := all
 all: $(out_file)

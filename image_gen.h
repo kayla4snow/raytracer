@@ -17,7 +17,7 @@ class ImageGen {
         void pixel_steps();
 
     private:
-        Color blinn_phong(std::shared_ptr<SceneObject> shape, const Point& intersect_pt, const Vec& ray);
+        Color blinn_phong(std::shared_ptr<SceneObject> shape, const HitResult& hit_result, const Vec& ray);
         Color depth_cueing(double shape_dist, Color illumination);
 
         FILE *fh = nullptr;

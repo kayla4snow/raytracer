@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <cmath>
 #include "options.h"
 
 Options::Options(std::string read_file) {
@@ -11,51 +12,48 @@ Options::Options(std::string read_file) {
         while (fh.good()) {
             keyword.clear();
             fh >> keyword;
+            if (keyword != "f" && previous_was_face == true) {
+                // Check if the last lines had been faces of a shape
+                auto new_shape = std::make_shared<TriangleMesh>();
+                new_shape->faces = tri_faces;
+                new_shape->base_color = curr_color;
+                shapes.emplace_back(new_shape);
+
+                previous_was_face = false;
+                tri_faces.clear();
+            }
             if (keyword == "imsize") {
                 fh >> width;
                 fh >> height;
-
-                fh >> keyword;
-                if (keyword != "eye") {
-                    std::cout << "File lists inputs in wrong order or missing" << std::endl;
-                    return;
-                }
+            }
+            if (keyword == "eye") {          
                 fh >> eye_pos[0];
                 fh >> eye_pos[1];
                 fh >> eye_pos[2];
-
-                fh >> keyword;
-                if (keyword != "viewdir") {
-                    std::cout << "File lists inputs in wrong order or missing" << std::endl;
-                    return;
-                }
+            }
+            if (keyword == "viewdir") {
                 fh >> view_direc[0];
                 fh >> view_direc[1];
                 fh >> view_direc[2];
-
-                fh >> keyword;
-                if (keyword != "hfov") {
-                    std::cout << "File lists inputs in wrong order or missing" << std::endl;
-                    return;
-                }
+            }
+            if (keyword == "hfov") {
                 fh >> hfov;
                 // Convert hfov to radians
                 hfov = hfov * 3.1415926 / 180.0;
-                
-                fh >> keyword;
-                if (keyword != "updir") {
-                    std::cout << "File lists inputs in wrong order or missing" << std::endl;
-                    return;
-                }
+            }
+            if (keyword == "vfov") {
+                double vfov;
+                fh >> vfov;
+                // Convert vfov to radians
+                vfov = vfov * 3.1415926 / 180.0;
+                hfov = 2.0 * std::atan(std::tan(vfov / 2.0) * (static_cast<double>(width) / static_cast<double>(height)));
+            }
+            if (keyword == "updir") {
                 fh >> up_direc[0];
                 fh >> up_direc[1];
                 fh >> up_direc[2];
-
-                fh >> keyword;
-                if (keyword != "bkgcolor") {
-                    std::cout << "File lists inputs in wrong order or missing" << std::endl;
-                    return;
-                }
+            }
+            if (keyword == "bkgcolor") {
                 fh >> bg_color[0];
                 fh >> bg_color[1];
                 fh >> bg_color[2];
@@ -90,6 +88,100 @@ Options::Options(std::string read_file) {
                 new_shape->base_color = curr_color;
                 shapes.emplace_back(new_shape);
             }
+            if (keyword == "v") {
+                Point new_vertex;
+                fh >> new_vertex[0];
+                fh >> new_vertex[1];
+                fh >> new_vertex[2];
+                tri_verticies.push_back(new_vertex);
+
+                // new_shape->base_color = curr_color;
+                // shapes.emplace_back(new_shape);
+            }
+            if (keyword == "vn") {
+                Vec new_norm;
+                fh >> new_norm[0];
+                fh >> new_norm[1];
+                fh >> new_norm[2];
+                tri_norms.push_back(new_norm);
+            }
+            if (keyword == "vt") {
+                TexCoord new_tex;
+                fh >> new_tex[0];
+                fh >> new_tex[1];
+                tri_textures.push_back(new_tex);
+            }
+            if (keyword == "f") {
+                // TODO maybe put a while loop here to add all faces at once to new TriangleMesh
+                std::string p1;
+                std::string p2;
+                std::string p3;
+                fh >> p1;
+                fh >> p2;
+                fh >> p3;
+
+                std::string pts = p1 + " " + p2 + " "+ p3;
+                unsigned int val1, val2, val3, val4, val5, val6, val7, val8, val9;
+                Face new_face;
+
+                // Check if syntax is  f v1/vt1/vn1 v2/vt2/vn2 v3/vt3/vn3
+                // Smooth-shaded, textured
+                if (sscanf(pts.c_str(), "%d/%d/%d %d/%d/%d %d/%d/%d", &val1, &val2, &val3, &val4, &val5, &val6, &val7, &val8, &val9) == 9) {
+                    new_face.hasTex = true;
+                    new_face.hasNorm = true;
+
+                    new_face.p0 = tri_verticies.at(val1 - 1);
+                    new_face.t0 = tri_textures.at(val2 - 1);
+                    new_face.n0 = tri_norms.at(val3 - 1);
+                    new_face.p1 = tri_verticies.at(val4 - 1);
+                    new_face.t1 = tri_textures.at(val5 - 1);
+                    new_face.n1 = tri_norms.at(val6 - 1);
+                    new_face.p2 = tri_verticies.at(val7 - 1);
+                    new_face.t2 = tri_textures.at(val8 - 1);
+                    new_face.n2 = tri_norms.at(val9 - 1);
+                }
+
+                // Check if syntax is  f v1//vn1 v2//vn2 v3//vn3
+                // Smooth-shaded, no texture
+                else if (sscanf(pts.c_str(), "%d//%d %d//%d %d//%d", &val1, &val3, &val4, &val6, &val7, &val9) == 6) {
+                    new_face.hasNorm = true;
+
+                    new_face.p0 = tri_verticies.at(val1 - 1);
+                    new_face.n0 = tri_norms.at(val3 - 1);
+                    new_face.p1 = tri_verticies.at(val4 - 1);
+                    new_face.n1 = tri_norms.at(val6 - 1);
+                    new_face.p2 = tri_verticies.at(val7 - 1);
+                    new_face.n2 = tri_norms.at(val9 - 1);
+                }
+
+                // Check if syntax is  f v1/vt1 v2/vt2 v3/vt3
+                // No smooth shading, textured            
+                else if (sscanf(pts.c_str(), "%d/%d %d/%d %d/%d", &val1, &val2, &val4, &val5, &val7, &val8) == 6) {
+                    new_face.hasTex = true;
+                    
+                    new_face.p0 = tri_verticies.at(val1 - 1);
+                    new_face.t0 = tri_textures.at(val2 - 1);
+                    new_face.p1 = tri_verticies.at(val4 - 1);
+                    new_face.t1 = tri_textures.at(val5 - 1);
+                    new_face.p2 = tri_verticies.at(val7 - 1);
+                    new_face.t2 = tri_textures.at(val8 - 1);
+                }
+
+                // Normal triangle -- no smooth shading, no texture
+                else if (sscanf(pts.c_str(), "%d %d %d", &val1, &val4, &val7) == 3) {
+                    new_face.p0 = tri_verticies.at(val1 - 1);
+                    new_face.p1 = tri_verticies.at(val4 - 1);
+                    new_face.p2 = tri_verticies.at(val7 - 1);
+                }
+
+                else {
+                    std::cout << "Invalid format for triangle face\n";
+                    continue;
+                }
+                // Ensure all faces of a mesh are being kept together
+                previous_was_face = true;
+                tri_faces.push_back(new_face);
+            }
             if (keyword == "light") {
                 // light x y z type (no intensity)
                 Point direction;
@@ -111,6 +203,7 @@ Options::Options(std::string read_file) {
                     std::cout << "Invalid light type provided in file";
                     break;
                 }
+                // *****TODO***** fix so works with light intensity
             }
             if (keyword == "attlight") {
                 // Light attenuation
@@ -165,6 +258,17 @@ Options::Options(std::string read_file) {
     }
 
     fh.close();
+
+    // Check if the last lines had been faces of a shape
+    if (previous_was_face == true) {
+        auto new_shape = std::make_shared<TriangleMesh>();
+        new_shape->faces = tri_faces;
+        new_shape->base_color = curr_color;
+        shapes.emplace_back(new_shape);
+        
+        previous_was_face = false;
+        tri_faces.clear();
+    }
 
     // Decrease the intensity of the lights if there are multiple
     if (int size = lights.size(); size > 1) {

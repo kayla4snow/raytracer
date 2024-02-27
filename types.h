@@ -5,6 +5,20 @@
 using Vec = std::array<double, 3>;
 using Point = std::array<double, 3>;
 using Color = std::array<double, 3>;
+// using Index3 = std::array<unsigned int, 3>;
+using TexCoord = std::array<double, 2>;
+
+struct Face {
+    bool hasNorm = false;
+    bool hasTex = false;
+
+    Point p0, p1, p2;
+    Vec n0, n1, n2;
+    TexCoord t0, t1, t2;
+
+    // Flat shading normal vector (constant per triangle)
+    Vec norm_flat_shade;
+};
 
 struct Ray{
     Point origin;

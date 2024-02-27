@@ -45,4 +45,14 @@ struct Options {
     // Shapes and lights
     std::vector<std::shared_ptr<SceneObject>> shapes; 
     std::vector<std::shared_ptr<Light>> lights;
+
+    // Triangle face lists
+    std::vector<Point> tri_verticies;
+    std::vector<Vec> tri_norms;
+    std::vector<TexCoord> tri_textures;
+    std::vector<Face> tri_faces;
+
+    // Check if previous keyword was also a face
+    // and therefor part of the same shape
+    bool previous_was_face = false;
 };

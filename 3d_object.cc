@@ -14,30 +14,134 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
         return {};
     }
 
+    HitResult retval; 
+
     double dist1 = (-b + sqrt(new_discriminant)) / (2 * a);
     double dist2 = (-b - sqrt(new_discriminant)) / (2 * a);
-    double shape_dist = -10000;
 
     // Find shortest distance between dist1 and dist2
     if (dist1 >= 0.0 && dist1 < dist2) {
-        shape_dist = dist1;
+        retval.shape_dist = dist1;
     }
     else if (dist2 >= 0.0 && dist2 < dist1) {
-        shape_dist = dist2;
+        retval.shape_dist = dist2;
     }
     
     // Find intersection pt   TODO maybe need unnormalized ray
-    Point intersection_pt = {ray.origin[0] + shape_dist * ray.direction[0], ray.origin[1] + shape_dist * ray.direction[1], ray.origin[2] + shape_dist * ray.direction[2]};
-    
-    return HitResult{shape_dist, intersection_pt};
-}
+    retval.intersect_pt = {ray.origin[0] + retval.shape_dist * ray.direction[0], ray.origin[1] + retval.shape_dist * ray.direction[1], ray.origin[2] + retval.shape_dist * ray.direction[2]};
 
-// Calculate the normal vector at a point on a sphere
-Vec Sphere::calc_normal_vector(const Point& point) const {
+    // Calculate the normal vector at a point on a sphere
     // N = [(xi, yi, zi) - (xc, yc, zc)] / r 
     // xi is ray/sphere intersection and xc is sphere center
-
-    Vec temp = subtract_vec(point, center);
-    return normalize_vec(scale_vec(1.0 / radius, temp));
-    // Added normalization
+    Vec temp = subtract_vec(retval.intersect_pt, center);
+    retval.normal_vec = normalize_vec(scale_vec(1.0 / radius, temp));
+    
+    return retval;
 }
+
+
+std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
+    /*
+    TODO 
+        - only consider positive distances (same as sphere)
+    - Find barycentric coords
+    */
+
+    // Loop through all faces of this mesh shape
+    for(auto& face : faces) {
+
+        Vec edge1 = subtract_vec(face.p1, face.p0);
+        Vec edge2 = subtract_vec(face.p2, face.p0);
+        // The order of the cross product is important--there is a front and back of the triangle
+        face.norm_flat_shade = cross_product(edge1, edge2);
+
+        double a = face.norm_flat_shade[0];
+        double b = face.norm_flat_shade[1];
+        double c = face.norm_flat_shade[2];
+
+        double denominator = a * ray.direction[0] + b * ray.direction[1] + c * ray.direction[2];
+        if (denominator == 0.0) {
+            // Skip if denominator is 0; the ray is parallel to the plane of the triangle
+            continue;
+        }
+
+        double d = (a * face.p0[0]) + (b * face.p0[1]) + (c * face.p0[2]);
+        double numerator = -1.0 * (a * ray.origin[0] + b * ray.origin[1] + c * ray.origin[2] + d);
+        double shape_dist = numerator / denominator;
+        if (shape_dist < 0.0) {
+            // Shape is behind eye
+            shape_dist = -shape_dist;
+            // continue;
+            // TODO
+        }
+
+        HitResult retval;
+        retval.shape_dist = shape_dist;
+        retval.intersect_pt = {ray.origin[0] + retval.shape_dist * ray.direction[0], ray.origin[1] + retval.shape_dist * ray.direction[1], ray.origin[2] + retval.shape_dist * ray.direction[2]};
+
+        // Find barycentric coords to determine of intersection_pt is inside triangle
+
+        double area = magnitude_vec(face.norm_flat_shade);
+        Vec edge_p = subtract_vec(retval.intersect_pt, face.p0);
+
+        // Dot products
+        double dot_11 = dot_product(edge1, edge1);
+        double dot_12 = dot_product(edge1, edge2);
+        double dot_22 = dot_product(edge2, edge2);
+        double dot_1p = dot_product(edge1, edge_p);
+        double dot_2p = dot_product(edge2, edge_p);
+
+        double determinate = dot_11 * dot_22 - dot_12 * dot_12;
+        if (determinate == 0) {
+            // No solution
+            continue;
+        }
+
+        double beta = (dot_22 * dot_1p - dot_12 * dot_2p) / determinate;
+        double gamma = (dot_11 * dot_2p - dot_12 * dot_1p) / determinate;
+        double alpha = 1 - (beta + gamma);
+
+        if (alpha < 0 || beta < 0 || gamma < 0 || alpha > 1 || beta > 1 || gamma > 1) {
+            continue;
+        }
+        if (std::abs((alpha + beta + gamma) - 1.0) >= 0.1) {
+            continue;
+        }
+
+        // Sub triangles found with barycentric coords
+        double sub_tri_a = alpha * area;
+        double sub_tri_b = beta * area;
+        double sub_tri_c = gamma * area;
+
+        if (sub_tri_a < 0 || sub_tri_b < 0 || sub_tri_c < 0) {
+            // intersection_pt is outside triangle
+            continue;
+        }
+
+        // Calculate the normal vector at a point on a triangle face
+        // Check if face was given normal vertex vectors from the file
+        if (!face.hasNorm) {
+            retval.normal_vec = face.norm_flat_shade;
+        }
+        else {
+            // n = (a*n0 +b*n1 +g*n2) / ||a*n0 +b*n1 +g*n2||
+            Vec temp = add_vec(add_vec(scale_vec(alpha, face.n0), scale_vec(beta, face.n1)), scale_vec(gamma, face.n2));
+            retval.normal_vec = normalize_vec(scale_vec(1 / magnitude_vec(temp), temp));
+        }
+
+        retval.normal_vec = normalize_vec(retval.normal_vec);
+        return retval;
+    }
+
+    // If outside for loop, no faces had an intersection
+    return {};
+}
+
+
+/*
+TODO
+- Why is the shape_dist backwards?
+    - Had to comment out test above
+- Example2 is bigger than it should be
+- Example7 
+*/
