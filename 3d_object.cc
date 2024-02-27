@@ -65,13 +65,13 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
             continue;
         }
 
-        double d = (a * face.p0[0]) + (b * face.p0[1]) + (c * face.p0[2]);
+        double d = -1.0 * ((a * face.p0[0]) + (b * face.p0[1]) + (c * face.p0[2]));
         double numerator = -1.0 * (a * ray.origin[0] + b * ray.origin[1] + c * ray.origin[2] + d);
         double shape_dist = numerator / denominator;
         if (shape_dist < 0.0) {
             // Shape is behind eye
-            shape_dist = -shape_dist;
-            // continue;
+            // shape_dist = -shape_dist;
+            continue;
             // TODO
         }
 
