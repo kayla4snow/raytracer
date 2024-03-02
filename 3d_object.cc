@@ -39,7 +39,12 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
     // xi is ray/sphere intersection and xc is sphere center
     Vec temp = subtract_vec(retval.intersect_pt, center);
     retval.normal_vec = normalize_vec(scale_vec(1.0 / radius, temp));
+
+
+    // Texture coords
+    compute_tex_coord(retval.u, retval.v, retval.normal_vec);
     
+
     return retval;
 }
 
@@ -49,29 +54,31 @@ MaterialColor Sphere::tex_color(const HitResult& hit_result) {
         // Default is the base_color if no texture specified
         return color;
     }
-    
+
+    color.diffuse_color = texture->getPixelColor(hit_result.u, hit_result.v);
+
+    return color;
+}
+
+void Sphere::compute_tex_coord(double& u, double& v, const Vec& normal_vec) {
     double phi;
     double theta;
     switch(texture->getAxis())
     {
         case TexImage::Axis::Z:
-            phi = acos(hit_result.normal_vec[2]);
-            theta = atan2(hit_result.normal_vec[1], hit_result.normal_vec[0]);
+            phi = acos(normal_vec[2]);
+            theta = atan2(normal_vec[1], normal_vec[0]);
             break;
         case TexImage::Axis::Y:
-            phi = acos(hit_result.normal_vec[1]);
-            theta = atan2(hit_result.normal_vec[0], hit_result.normal_vec[2]);
+            phi = acos(normal_vec[1]);
+            theta = atan2(normal_vec[0], normal_vec[2]);
             break;
         case TexImage::Axis::X:
-            phi = acos(hit_result.normal_vec[0]);
-            theta = atan2(hit_result.normal_vec[2], hit_result.normal_vec[1]);
+            phi = acos(normal_vec[0]);
+            theta = atan2(normal_vec[2], normal_vec[1]);
             break;
     }
 
-
-
-    double u;
-    double v;
     if (theta > 0) {
         u = theta / (2 * PI);
     }
@@ -84,10 +91,6 @@ MaterialColor Sphere::tex_color(const HitResult& hit_result) {
     else {
         v = (phi + 2 * PI) / (2 * PI);
     }
-
-    color.diffuse_color = texture->getPixelColor(u, v);
-
-    return color;
 }
 
 
@@ -173,6 +176,13 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
         }
 
         retval.normal_vec = normalize_vec(retval.normal_vec);
+        
+
+        // Texture coords
+        retval.u = alpha * face.t0[0] + beta * face.t1[0] + gamma * face.t2[0];
+        retval.v = alpha * face.t0[1] + beta * face.t1[1] + gamma * face.t2[1];
+
+
         return retval;
     }
 
@@ -181,5 +191,13 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
 }
 
 MaterialColor TriangleMesh::tex_color(const HitResult& hit_result) {
-    return base_color;
+    MaterialColor color = base_color;
+    if (!texture) {
+        // Default is the base_color if no texture specified
+        return color;
+    }
+
+    color.diffuse_color = texture->getPixelColor(hit_result.u, hit_result.v);
+
+    return color;
 }

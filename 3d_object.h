@@ -9,6 +9,8 @@ struct HitResult {
     double shape_dist = -100000;
     Point intersect_pt;
     Vec normal_vec;
+    double u = 0;
+    double v = 0;
 };
 
 class SceneObject {
@@ -29,6 +31,9 @@ class Sphere : public SceneObject {
         MaterialColor tex_color(const HitResult& hit_result) override;
 
         double radius = 0.0;
+
+    private:
+        void compute_tex_coord(double& u, double& v, const Vec& normal_vec);
 };
 
 class TriangleMesh : public SceneObject {
