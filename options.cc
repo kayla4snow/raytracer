@@ -2,10 +2,12 @@
 #include <fstream>
 #include <cmath>
 #include "options.h"
+#include "texture_image.h"
 
 Options::Options(std::string read_file) {
     std::string keyword;
     MaterialColor curr_color;
+    std::shared_ptr<TexImage> curr_tex;
 
     std::ifstream fh(read_file);
     if (fh.is_open()) {
@@ -17,6 +19,7 @@ Options::Options(std::string read_file) {
                 auto new_shape = std::make_shared<TriangleMesh>();
                 new_shape->faces = tri_faces;
                 new_shape->base_color = curr_color;
+                new_shape->texture = curr_tex;
                 shapes.emplace_back(new_shape);
 
                 previous_was_face = false;
@@ -41,13 +44,13 @@ Options::Options(std::string read_file) {
                 // Convert hfov to radians
                 hfov = hfov * 3.1415926 / 180.0;
             }
-            if (keyword == "vfov") {
-                double vfov;
-                fh >> vfov;
-                // Convert vfov to radians
-                vfov = vfov * 3.1415926 / 180.0;
-                hfov = 2.0 * std::atan(std::tan(vfov / 2.0) * (static_cast<double>(width) / static_cast<double>(height)));
-            }
+            // if (keyword == "vfov") {
+            //     double vfov;
+            //     fh >> vfov;
+            //     // Convert vfov to radians
+            //     vfov = vfov * 3.1415926 / 180.0;
+            //     hfov = 2.0 * std::atan(std::tan(vfov / 2.0) * (static_cast<double>(width) / static_cast<double>(height)));
+            // }
             if (keyword == "updir") {
                 fh >> up_direc[0];
                 fh >> up_direc[1];
@@ -86,6 +89,7 @@ Options::Options(std::string read_file) {
 
                 fh >> new_shape->radius;
                 new_shape->base_color = curr_color;
+                new_shape->texture = curr_tex;
                 shapes.emplace_back(new_shape);
             }
             if (keyword == "v") {
@@ -182,6 +186,11 @@ Options::Options(std::string read_file) {
                 previous_was_face = true;
                 tri_faces.push_back(new_face);
             }
+            if (keyword == "texture") {
+                std::string file_name;
+                fh >> file_name;
+                curr_tex = std::make_shared<TexImage>(file_name, TexImage::Axis::Y);
+            }
             if (keyword == "light") {
                 // light x y z type (no intensity)
                 Point direction;
@@ -264,6 +273,7 @@ Options::Options(std::string read_file) {
         auto new_shape = std::make_shared<TriangleMesh>();
         new_shape->faces = tri_faces;
         new_shape->base_color = curr_color;
+        new_shape->texture = curr_tex;
         shapes.emplace_back(new_shape);
         
         previous_was_face = false;

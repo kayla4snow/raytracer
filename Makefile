@@ -5,8 +5,8 @@ out_file = raytracer1c
 .DEFAULT_GOAL := all
 all: $(out_file)
 
-$(out_file): main.o image_gen.o options.o view_window.o 3d_object.o light_source.o
-	$(CXX) $(CXXFLAGS) main.o image_gen.o options.o view_window.o 3d_object.o light_source.o -o $(out_file) 
+$(out_file): main.o image_gen.o options.o view_window.o 3d_object.o light_source.o texture_image.o
+	$(CXX) $(CXXFLAGS) main.o image_gen.o options.o view_window.o 3d_object.o light_source.o texture_image.o -o $(out_file) 
 
 main.o: main.cc
 	$(CXX) $(CXXFLAGS) -c main.cc -o main.o
@@ -25,6 +25,9 @@ view_window.o: view_window.cc
 
 light_source.o: light_source.cc
 	$(CXX) $(CXXFLAGS) -c light_source.cc -o light_source.o
+
+texture_image.o: texture_image.cc
+	$(CXX) $(CXXFLAGS) -c texture_image.cc -o texture_image.o
 
 
 clean:

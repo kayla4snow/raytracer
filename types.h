@@ -1,6 +1,7 @@
 #pragma once
 
 #include <array>
+#include <memory>
 
 using Vec = std::array<double, 3>;
 using Point = std::array<double, 3>;
@@ -24,6 +25,9 @@ struct Ray{
     Point origin;
     Vec direction;
 }; 
+
+// Forward declare TexImage
+class TexImage;
 
 // Color of shapes and background
 struct MaterialColor {

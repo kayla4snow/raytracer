@@ -1,7 +1,11 @@
 #include <iostream>
+#include <cmath>
 #include "3d_object.h"
 #include "view_window.h"
 #include "options.h"
+#include "texture_image.h"
+
+const double PI = 3.141592654;
 
 std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
     double a = ray.direction[0] * ray.direction[0] + ray.direction[1] * ray.direction[1] + ray.direction[2] * ray.direction[2]; // Equals 1 if ray direction vec is normalized
@@ -39,14 +43,55 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
     return retval;
 }
 
+MaterialColor Sphere::tex_color(const HitResult& hit_result) {
+    MaterialColor color = base_color;
+    if (!texture) {
+        // Default is the base_color if no texture specified
+        return color;
+    }
+    
+    double phi;
+    double theta;
+    switch(texture->getAxis())
+    {
+        case TexImage::Axis::Z:
+            phi = acos(hit_result.normal_vec[2]);
+            theta = atan2(hit_result.normal_vec[1], hit_result.normal_vec[0]);
+            break;
+        case TexImage::Axis::Y:
+            phi = acos(hit_result.normal_vec[1]);
+            theta = atan2(hit_result.normal_vec[0], hit_result.normal_vec[2]);
+            break;
+        case TexImage::Axis::X:
+            phi = acos(hit_result.normal_vec[0]);
+            theta = atan2(hit_result.normal_vec[2], hit_result.normal_vec[1]);
+            break;
+    }
+
+
+
+    double u;
+    double v;
+    if (theta > 0) {
+        u = theta / (2 * PI);
+    }
+    else {
+        u = (theta + 2 * PI) / (2 * PI);
+    }
+    if (phi > 0) {
+        v = phi / (2 * PI);
+    }
+    else {
+        v = (phi + 2 * PI) / (2 * PI);
+    }
+
+    color.diffuse_color = texture->getPixelColor(u, v);
+
+    return color;
+}
+
 
 std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
-    /*
-    TODO 
-        - only consider positive distances (same as sphere)
-    - Find barycentric coords
-    */
-
     // Loop through all faces of this mesh shape
     for(auto& face : faces) {
 
@@ -70,9 +115,7 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
         double shape_dist = numerator / denominator;
         if (shape_dist < 0.0) {
             // Shape is behind eye
-            // shape_dist = -shape_dist;
             continue;
-            // TODO
         }
 
         HitResult retval;
@@ -137,11 +180,6 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
     return {};
 }
 
-
-/*
-TODO
-- Why is the shape_dist backwards?
-    - Had to comment out test above
-- Example2 is bigger than it should be
-- Example7 
-*/
+MaterialColor TriangleMesh::tex_color(const HitResult& hit_result) {
+    return base_color;
+}

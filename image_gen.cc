@@ -44,8 +44,9 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const HitResult&
     Vec N = hit_result.normal_vec;
 
     Color mult_lights = {0.0, 0.0, 0.0};
+    MaterialColor color = shape->tex_color(hit_result);
 
-    Vec ambient_term = scale_vec(shape->base_color.coef_ambient, shape->base_color.diffuse_color);
+    Vec ambient_term = scale_vec(color.coef_ambient, color.diffuse_color);
     clamp_vec(ambient_term);
 
     for (auto& light : input.lights) {
@@ -53,14 +54,14 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const HitResult&
         Vec H = normalize_vec(add_vec(L, ray)); // Ray is V
 
         double dot_N_L = dot_product(N, L); 
-        Vec temp1 = scale_vec(shape->base_color.coef_diffuse, shape->base_color.diffuse_color);
+        Vec temp1 = scale_vec(color.coef_diffuse, color.diffuse_color);
         diffuse_term = scale_vec(std::max(0.0, dot_N_L), temp1);
         clamp_vec(diffuse_term);
 
         double dot_N_H = dot_product(N, H);
 
-        Vec temp2 = scale_vec(shape->base_color.coef_specular, shape->base_color.spec_highlight);
-        specular_term = scale_vec(std::pow(std::max(0.0, dot_N_H), shape->base_color.spec_exponent), temp2); 
+        Vec temp2 = scale_vec(color.coef_specular, color.spec_highlight);
+        specular_term = scale_vec(std::pow(std::max(0.0, dot_N_H), color.spec_exponent), temp2); 
         clamp_vec(specular_term);
 
         // Shadow ray
