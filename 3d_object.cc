@@ -85,12 +85,7 @@ void Sphere::compute_tex_coord(double& u, double& v, const Vec& normal_vec) {
     else {
         u = (theta + 2 * PI) / (2 * PI);
     }
-    if (phi > 0) {
-        v = phi / (2 * PI);
-    }
-    else {
-        v = (phi + 2 * PI) / (2 * PI);
-    }
+    v = phi / PI;
 }
 
 
@@ -176,7 +171,7 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
         }
 
         retval.normal_vec = normalize_vec(retval.normal_vec);
-        
+
 
         // Texture coords
         retval.u = alpha * face.t0[0] + beta * face.t1[0] + gamma * face.t2[0];

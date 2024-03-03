@@ -189,7 +189,7 @@ Options::Options(std::string read_file) {
             if (keyword == "texture") {
                 std::string file_name;
                 fh >> file_name;
-                curr_tex = std::make_shared<TexImage>(file_name, TexImage::Axis::Y);
+                curr_tex = std::make_shared<TexImage>(file_name, TexImage::Axis::Z);
             }
             if (keyword == "light") {
                 // light x y z type (no intensity)
