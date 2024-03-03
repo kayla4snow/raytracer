@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <vector>
 #include "types.h"
 
 class TexImage {
@@ -18,8 +19,8 @@ class TexImage {
     
     private:
         Axis _axis;
+        unsigned int width;
+        unsigned int height;
         
-        // read file
-        // store file
-        // width and height of file
+        std::vector<Color> pixels;
 };

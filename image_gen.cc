@@ -18,7 +18,7 @@ ImageGen::~ImageGen() {
 void ImageGen::create_ppm(std::string write_file) {
     // Creates new file or catches invalid file
     fh = fopen(write_file.c_str(), "w");
-    if (fh == NULL) {
+    if (fh == nullptr) {
         std::cout << "Failed to open file\n" << std::endl;
         return;
     }
