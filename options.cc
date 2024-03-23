@@ -60,6 +60,8 @@ Options::Options(std::string read_file) {
                 fh >> bg_color[0];
                 fh >> bg_color[1];
                 fh >> bg_color[2];
+
+                fh >> bg_index_refrac;
             }
             if (keyword == "mtlcolor") {
                 // mtlcolor Odr Odg Odb Osr Osg Osb ka kd ks n
@@ -80,6 +82,10 @@ Options::Options(std::string read_file) {
 
                 // Specular exponent
                 fh >> curr_color.spec_exponent;
+
+                // Transparent and mirror-like surfaces
+                fh >> curr_color.opacity;
+                fh >> curr_color.index_refraction;
             }
             if (keyword == "sphere") { 
                 auto new_shape = std::make_shared<Sphere>();

@@ -42,7 +42,9 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
 
 
     // Texture coords
-    compute_tex_coord(retval.u, retval.v, retval.normal_vec);
+    if (texture) {
+        compute_tex_coord(retval.u, retval.v, retval.normal_vec);
+    }
     
 
     return retval;
@@ -61,6 +63,10 @@ MaterialColor Sphere::tex_color(const HitResult& hit_result) {
 }
 
 void Sphere::compute_tex_coord(double& u, double& v, const Vec& normal_vec) {
+    // if (!texture) {
+    //     return;
+    // }
+
     double phi;
     double theta;
     switch(texture->getAxis())

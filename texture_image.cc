@@ -57,8 +57,6 @@ TexImage::Axis TexImage::getAxis() const {
 }
 
 Color TexImage::getPixelColor(double u, double v) {
-    // unsigned int x = static_cast<unsigned int>(u * width);
-    // unsigned int y = static_cast<unsigned int>(v * height);
     double ignore;
     unsigned int x = std::round(std::modf(u, &ignore) * (width - 1));
     unsigned int y = std::round(std::modf(v, &ignore) * (height - 1));

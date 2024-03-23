@@ -39,6 +39,7 @@ struct Options {
     Vec up_direc = {0.0, 0.0, 0.0};
     // Bkgcolor r g b
     Color bg_color;
+    double bg_index_refrac = 1.0;
 
     std::optional<DepthCue> depth_cue;
 
