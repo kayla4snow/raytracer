@@ -15,7 +15,7 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
 
     if (new_discriminant < 0) {
         // Skip current shape if discriminant is negative, return empty
-        return {};
+        return std::nullopt;
     }
 
     HitResult retval; 
@@ -23,15 +23,24 @@ std::optional<HitResult> Sphere::hit_test(const Ray& ray) {
     double dist1 = (-b + sqrt(new_discriminant)) / (2 * a);
     double dist2 = (-b - sqrt(new_discriminant)) / (2 * a);
 
-    // Find shortest distance between dist1 and dist2
-    if (dist1 >= 0.0 && dist1 < dist2) {
+    const double almost_zero = 0.001;  // Fixed speckle problem with coef_specular in transparent objs
+    if (dist1 <= almost_zero && dist2 <= almost_zero) {
+        return std::nullopt;
+    }
+    else if (dist1 <= almost_zero) {
+        retval.shape_dist = dist2;
+    }
+    else if (dist2 <= almost_zero) {
         retval.shape_dist = dist1;
     }
-    else if (dist2 >= 0.0 && dist2 < dist1) {
+    else if (dist1 < dist2) {
+        retval.shape_dist = dist1;
+    }
+    else {
         retval.shape_dist = dist2;
     }
     
-    // Find intersection pt   TODO maybe need unnormalized ray
+    // Find intersection pt
     retval.intersect_pt = {ray.origin[0] + retval.shape_dist * ray.direction[0], ray.origin[1] + retval.shape_dist * ray.direction[1], ray.origin[2] + retval.shape_dist * ray.direction[2]};
 
     // Calculate the normal vector at a point on a sphere
