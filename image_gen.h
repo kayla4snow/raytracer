@@ -13,7 +13,7 @@ class ImageGen {
 
         void create_ppm(std::string write_file);
         void color_to_ppm(Color color);
-        Color compute_color(const Ray& ray, int recurse_depth = 0);
+        Color compute_color(const Ray& ray, double idx_refraction, int recurse_depth = 0);
         void pixel_steps();
 
     private:

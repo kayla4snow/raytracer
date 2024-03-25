@@ -83,7 +83,7 @@ Color ImageGen::blinn_phong(std::shared_ptr<SceneObject> shape, const HitResult&
             if (shadow_hit->shape_dist < 0 || shadow_hit->shape_dist > distance_to_light) {
                 continue;
             }
-            shadow_factor = 0.0;
+            shadow_factor *= (1 - shadowShape->base_color.opacity); 
         }
 
         double x = shadow_factor * light->attenuation_intensity(distance_to_light);
@@ -124,7 +124,7 @@ Color ImageGen::depth_cueing(double shape_dist, Color illumination) {
     return depth_cue;
 }
 
-Color ImageGen::compute_color(const Ray& ray, int recurse_depth) {
+Color ImageGen::compute_color(const Ray& ray, double idx_refraction, int recurse_depth) {
     bool found_anything = false;
     double shortest_dist = -1.0;
     Color color = input.bg_color; 
@@ -165,7 +165,7 @@ Color ImageGen::compute_color(const Ray& ray, int recurse_depth) {
                     Ray reflection_ray = {reverse_ray.origin, R};
 
                     // Recursion
-                    Color R_lambda = compute_color(reflection_ray, recurse_depth + 1);
+                    Color R_lambda = compute_color(reflection_ray, idx_refraction, recurse_depth + 1);
 
                     reflection_term = scale_vec(Fr, R_lambda); 
                 }
@@ -173,7 +173,7 @@ Color ImageGen::compute_color(const Ray& ray, int recurse_depth) {
                 // Refraction (transparent objects)
                 double alpha = shape->base_color.opacity;
                 if (alpha < 1.0) {
-                    double i_eta = input.bg_index_refrac;
+                    double i_eta = idx_refraction;
                     double t_eta = shape->base_color.index_refraction;
                     double under_root = 1.0 - ((i_eta / t_eta) * (i_eta / t_eta)) * (1.0 - (dot_N_I * dot_N_I));
                     Vec T = {0.0, 0.0, 0.0};
@@ -182,48 +182,70 @@ Color ImageGen::compute_color(const Ray& ray, int recurse_depth) {
                         under_root = std::sqrt(under_root);
                         Vec temp = scale_vec(i_eta / t_eta, subtract_vec(scale_vec(dot_N_I, N), reverse_ray.direction));
                         T = add_vec(scale_vec(under_root, scale_vec(-1, N)), temp);
+                    
+
+                        // Origin of refraction_ray is slightly inside shape 
+                        // to ensure no confusion with intersections
+                        Ray refraction_ray = {add_vec(scale_vec(0.1, T), hit_result->intersect_pt), T};
+                        // Find intersection of other side of shape
+                        auto hit_other_side = shape->hit_test(refraction_ray);  //TODO assumes it hits other side
+                        if (!hit_other_side || hit_other_side->shape_dist < 0.0) {
+                            std::cout << ":(\n";
+                            continue;
+                        }
+                        double dist_inside = magnitude_vec(subtract_vec(hit_other_side->intersect_pt, hit_result->intersect_pt));
+
+                        // New T
+                        N = scale_vec(-1.0, hit_other_side->normal_vec);
+                        reverse_ray = {hit_other_side->intersect_pt, scale_vec(-1.0, T)};
+                        dot_N_I = dot_product(N, reverse_ray.direction);
+
+                        i_eta = shape->base_color.index_refraction;
+                        t_eta = idx_refraction;
+                        under_root = 1 - ((i_eta / t_eta) * (i_eta / t_eta)) * (1.0 - (dot_N_I * dot_N_I));
+                        if (/* TODO  (i_eta / t_eta) * sin(theta_i) < 1|| */  under_root >= 0) {
+                            under_root = std::sqrt(under_root);
+                            Vec temp = scale_vec(i_eta / t_eta, subtract_vec(scale_vec(dot_N_I, N), reverse_ray.direction));
+                            T = add_vec(scale_vec(under_root, scale_vec(-1, N)), temp);
+                        
+                            // TODO pull out the duplicate T equations into new function?
+
+                            refraction_ray = {add_vec(scale_vec(0.1, T), hit_other_side->intersect_pt), T};
+
+                            Color T_lambda = compute_color(refraction_ray, idx_refraction, recurse_depth + 1);
+
+                            // TODO Where to put Schlick approx for relfectance?
+                            // TODO it only impacts Fr: Fr = F0 + (1 - F0)(1 - cos(theta))^5
+                            refraction_term = scale_vec((1 - Fr) * std::exp(-alpha * dist_inside), T_lambda);  // exp() is e^x
+                            // refraction_term = scale_vec((1 - Fr) * (1.0 - alpha), T_lambda);
+                        }
+                        else {  // Total Internal Reflection
+                            Vec temp_N = scale_vec(-1.0, hit_other_side->normal_vec);
+                            double temp_dot_N_I = dot_product(reverse_ray.direction, temp_N);
+                            double Fr = F0 + (1 - F0) * pow(1 - temp_dot_N_I, 5);
+
+                            Vec R = subtract_vec(scale_vec(2 * temp_dot_N_I, temp_N), reverse_ray.direction);  // R = 2(N dot I)N - I
+                            Ray reflection_ray = {reverse_ray.origin, R};
+
+                            // Recursion
+                            Color R_lambda = compute_color(reflection_ray, shape->base_color.index_refraction, recurse_depth + 1);
+                            // Overwriting reflection_term (to avoid counting it twice)
+                            reflection_term = scale_vec(Fr, R_lambda); 
+                        }
                     }
                     else {  // Total Internal Reflection
-                        // TODO maybe reverse normal vec to point inside shape and then compute reflection
-                        std::cout << "Total Internal Reflection!\n";
+                        Vec temp_N = scale_vec(-1.0, N);
+                        double temp_dot_N_I = dot_product(reverse_ray.direction, temp_N);
+                        double Fr = F0 + (1 - F0) * pow(1 - temp_dot_N_I, 5);
+
+                        Vec R = subtract_vec(scale_vec(2 * temp_dot_N_I, temp_N), reverse_ray.direction);  // R = 2(N dot I)N - I
+                        Ray reflection_ray = {reverse_ray.origin, R};
+
+                        // Recursion
+                        Color R_lambda = compute_color(reflection_ray, shape->base_color.index_refraction, recurse_depth + 1);
+                        // Overwriting reflection_term (to avoid counting it twice)
+                        reflection_term = scale_vec(Fr, R_lambda); 
                     }
-
-                    // Origin of refraction_ray is slightly inside shape 
-                    // to ensure no confusion with intersections
-                    Ray refraction_ray = {add_vec(scale_vec(0.1, T), hit_result->intersect_pt), T};
-                    // Find intersection of other side of shape
-                    auto hit_other_side = shape->hit_test(refraction_ray);  //TODO assumes it hits other side
-                    if (!hit_other_side || hit_other_side->shape_dist < 0.0) {
-                        std::cout << ":(\n";
-                    }
-                    double dist_inside = magnitude_vec(subtract_vec(hit_other_side->intersect_pt, hit_result->intersect_pt));
-
-                    // New T
-                    N = scale_vec(-1.0, hit_other_side->normal_vec);
-                    reverse_ray = {hit_other_side->intersect_pt, scale_vec(-1.0, T)};
-                    dot_N_I = dot_product(N, reverse_ray.direction);
-
-                    i_eta = shape->base_color.index_refraction;
-                    t_eta = input.bg_index_refrac;
-                    under_root = 1 - ((i_eta / t_eta) * (i_eta / t_eta)) * (1.0 - (dot_N_I * dot_N_I));
-                    if (/* TODO  (i_eta / t_eta) * sin(theta_i) < 1|| */  under_root >= 0) {
-                        under_root = std::sqrt(under_root);
-                        Vec temp = scale_vec(i_eta / t_eta, subtract_vec(scale_vec(dot_N_I, N), reverse_ray.direction));
-                        T = add_vec(scale_vec(under_root, scale_vec(-1, N)), temp);
-                    }
-                    else {  // Total Internal Reflection
-                        std::cout << "Total Internal Reflection!\n";
-                    }
-                    // TODO pull out the duplicate T equations into new function?
-
-                    refraction_ray = {add_vec(scale_vec(0.1, T), hit_other_side->intersect_pt), T};
-
-                    Color T_lambda = compute_color(refraction_ray, recurse_depth + 1);
-
-                    // TODO Where to put Schlick approx for relfectance?
-                    // TODO it only impacts Fr: Fr = F0 + (1 - F0)(1 - cos(theta))^5
-                    refraction_term = scale_vec((1 - Fr) * std::exp(-alpha * dist_inside), T_lambda);  // exp() is e^x
-                    // refraction_term = scale_vec((1 - Fr) * (1.0 - alpha), T_lambda);
                 }
                 /*
                 - Find eta i and eta t
@@ -272,7 +294,7 @@ void ImageGen::pixel_steps() {
             Ray ray = compute_ray(window.eye, curr); // Compute ray with eye as the origin
 
             // Call compute_color on each ray (in each iteration)
-            Color color = compute_color(ray);
+            Color color = compute_color(ray, input.bg_index_refrac);
             color_to_ppm(color);
             curr = add_vec(curr, horiz_step); 
         }
