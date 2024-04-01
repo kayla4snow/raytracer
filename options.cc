@@ -108,21 +108,20 @@ Options::Options(std::string read_file) {
                 // new_shape->base_color = curr_color;
                 // shapes.emplace_back(new_shape);
             }
-            if (keyword == "vn") {
+            if (keyword == "vn") {  // Vertex normal
                 Vec new_norm;
                 fh >> new_norm[0];
                 fh >> new_norm[1];
                 fh >> new_norm[2];
                 tri_norms.push_back(new_norm);
             }
-            if (keyword == "vt") {
+            if (keyword == "vt") {  // Vertex texture
                 TexCoord new_tex;
                 fh >> new_tex[0];
                 fh >> new_tex[1];
                 tri_textures.push_back(new_tex);
             }
-            if (keyword == "f") {
-                // TODO maybe put a while loop here to add all faces at once to new TriangleMesh
+            if (keyword == "f") {  // Triangle polygon face
                 std::string p1;
                 std::string p2;
                 std::string p3;

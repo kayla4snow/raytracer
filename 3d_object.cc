@@ -123,10 +123,12 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
             continue;
         }
 
+        const double almost_zero = 0.01;  // Fixed speckle problem with coef_specular in transparent objs
+
         double d = -1.0 * ((a * face.p0[0]) + (b * face.p0[1]) + (c * face.p0[2]));
         double numerator = -1.0 * (a * ray.origin[0] + b * ray.origin[1] + c * ray.origin[2] + d);
         double shape_dist = numerator / denominator;
-        if (shape_dist < 0.0) {
+        if (shape_dist < almost_zero) {
             // Shape is behind eye
             continue;
         }
@@ -197,7 +199,7 @@ std::optional<HitResult> TriangleMesh::hit_test(const Ray& ray) {
     }
 
     // If outside for loop, no faces had an intersection
-    return {};
+    return std::nullopt;
 }
 
 MaterialColor TriangleMesh::tex_color(const HitResult& hit_result) {

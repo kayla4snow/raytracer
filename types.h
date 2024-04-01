@@ -46,8 +46,8 @@ struct MaterialColor {
     double spec_exponent = 0.0;
 
     // Transparent and mirror-like surfaces
-    double opacity = 0.0;  // alpha
-    double index_refraction = 0.0;  // eta (the weird n), typically in range 1-2.5
+    double opacity = 1.0;  // alpha
+    double index_refraction = 1.0;  // eta (the weird n), typically in range 1-2.5
 };
 
 // TODO have a different color type for bg color, which doesnt have the other types?
