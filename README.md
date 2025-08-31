@@ -1,6 +1,6 @@
 # Ray_tracer
 
-Features: 
+## Features: 
 - Spheres and triangle meshes
 - Blinn-phong shading
 - Lighting
@@ -15,3 +15,7 @@ Features:
     - Transparent objects
         - Visibility attenuation
     - Total internal reflection
+
+## Examples:
+![Spheres showing reflection and refraction](./1d_test/reflection_refraction.png)
+![Textures on 3D objects](./1c_test/texture_barn.png)
